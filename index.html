@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StyleAI — AI-Powered Fashion Advisor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── RESET & VARIABLES ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d0b09;
+      --surface:  #161310;
+      --card:     #1e1a16;
+      --border:   #2e2820;
+      --gold:     #c9a96e;
+      --gold-lt:  #e8d5a8;
+      --cream:    #f5ede0;
+      --text:     #e8ddd0;
+      --muted:    #7a6e62;
+      --accent:   #8b4a2f;
+      --success:  #4a7c59;
+      --error:    #8b3a3a;
+      --radius:   4px;
+      --shadow:   0 8px 40px rgba(0,0,0,.6);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── SCROLLBAR ───────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── TYPOGRAPHY ──────────────────────────────────────────────────── */
+    h1, h2, h3 { font-family: 'Cormorant Garamond', serif; letter-spacing: .02em; }
+
+    /* ── NAV ─────────────────────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 3rem;
+      background: rgba(13,11,9,.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.6rem; font-weight: 300; letter-spacing: .12em;
+      color: var(--gold); text-decoration: none;
+    }
+    .nav-logo span { font-style: italic; color: var(--gold-lt); }
+    .nav-links { display: flex; gap: 2rem; align-items: center; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none; font-size: .85rem;
+      letter-spacing: .08em; text-transform: uppercase;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--gold); }
+    .nav-auth { display: flex; gap: .8rem; align-items: center; }
+    .btn-ghost {
+      background: none; border: 1px solid var(--border);
+      color: var(--text); padding: .5rem 1.2rem;
+      border-radius: var(--radius); cursor: pointer;
+      font-family: 'DM Sans', sans-serif; font-size: .82rem;
+      letter-spacing: .06em; text-transform: uppercase;
+      transition: border-color .2s, color .2s;
+    }
+    .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-gold {
+      background: var(--gold); border: none; color: var(--bg);
+      padding: .5rem 1.4rem; border-radius: var(--radius);
+      cursor: pointer; font-family: 'DM Sans', sans-serif;
+      font-size: .82rem; font-weight: 500; letter-spacing: .06em;
+      text-transform: uppercase; transition: background .2s;
+    }
+    .btn-gold:hover { background: var(--gold-lt); }
+    #userGreet { font-size: .85rem; color: var(--gold); }
+
+    /* ── HERO ────────────────────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh; display: flex; align-items: center;
+      justify-content: center; padding: 8rem 2rem 4rem;
+      position: relative; overflow: hidden;
+      background: radial-gradient(ellipse 80% 60% at 50% 80%, #1a0f0a 0%, var(--bg) 70%);
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9a96e' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      opacity: .4;
+    }
+    .hero-content { text-align: center; max-width: 760px; position: relative; z-index: 1; }
+    .hero-eyebrow {
+      font-size: .75rem; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 1.2rem; display: block;
+    }
+    .hero h1 {
+      font-size: clamp(3rem, 7vw, 6rem); font-weight: 300; line-height: 1.1;
+      color: var(--cream);
+    }
+    .hero h1 em { font-style: italic; color: var(--gold); }
+    .hero-sub {
+      margin-top: 1.4rem; font-size: 1.05rem; color: var(--muted);
+      line-height: 1.7; max-width: 540px; margin-inline: auto;
+    }
+    .hero-actions { display: flex; gap: 1rem; justify-content: center; margin-top: 2.4rem; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--gold); color: var(--bg); border: none;
+      padding: .9rem 2.4rem; border-radius: var(--radius);
+      font-family: 'DM Sans', sans-serif; font-size: .9rem; font-weight: 500;
+      letter-spacing: .1em; text-transform: uppercase; cursor: pointer;
+      transition: background .2s, transform .15s;
+    }
+    .btn-primary:hover { background: var(--gold-lt); transform: translateY(-1px); }
+    .btn-outline {
+      background: none; color: var(--text); border: 1px solid var(--border);
+      padding: .9rem 2.4rem; border-radius: var(--radius);
+      font-family: 'DM Sans', sans-serif; font-size: .9rem;
+      letter-spacing: .1em; text-transform: uppercase; cursor: pointer;
+      transition: border-color .2s, color .2s;
+      text-decoration: none; display: inline-block;
+    }
+    .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ── DIVIDER ─────────────────────────────────────────────────────── */
+    .divider {
+      display: flex; align-items: center; gap: 1rem;
+      margin: 0 auto 3rem; max-width: 400px;
+      color: var(--muted); font-size: .7rem; letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── SECTIONS ────────────────────────────────────────────────────── */
+    section { padding: 5rem 2rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 300; color: var(--cream); margin-bottom: .5rem; }
+    .section-title em { font-style: italic; color: var(--gold); }
+    .section-sub { color: var(--muted); font-size: .95rem; margin-bottom: 3rem; }
+
+    /* ── TOOLS GRID ──────────────────────────────────────────────────── */
+    .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+
+    .tool-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 2rem;
+      cursor: pointer; transition: border-color .25s, transform .2s;
+      position: relative; overflow: hidden;
+    }
+    .tool-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0; transition: opacity .3s;
+    }
+    .tool-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+    .tool-card:hover::before { opacity: 1; }
+    .tool-icon { font-size: 1.8rem; margin-bottom: 1rem; }
+    .tool-card h3 { font-size: 1.3rem; font-weight: 400; color: var(--cream); margin-bottom: .5rem; }
+    .tool-card p { font-size: .88rem; color: var(--muted); line-height: 1.6; }
+    .tool-tag {
+      display: inline-block; margin-top: 1rem;
+      font-size: .7rem; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--gold); border: 1px solid var(--gold);
+      padding: .2rem .6rem; border-radius: 2px;
+    }
+
+    /* ── FORM PANELS ─────────────────────────────────────────────────── */
+    .panel {
+      display: none; background: var(--card);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 2.5rem; margin-top: 1.5rem;
+    }
+    .panel.active { display: block; animation: fadeIn .3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    .panel-title { font-size: 1.6rem; font-weight: 300; color: var(--cream); margin-bottom: 1.5rem; }
+    .panel-title span { color: var(--gold); font-style: italic; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+    .form-group { display: flex; flex-direction: column; gap: .4rem; margin-bottom: 1rem; }
+    .form-group label { font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+    .form-group input, .form-group select, .form-group textarea {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: .75rem 1rem; border-radius: var(--radius);
+      font-family: 'DM Sans', sans-serif; font-size: .9rem;
+      transition: border-color .2s; outline: none;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--gold);
+    }
+    .form-group select option { background: var(--card); }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+
+    /* ── UPLOAD AREA ─────────────────────────────────────────────────── */
+    .upload-area {
+      border: 1.5px dashed var(--border); border-radius: var(--radius);
+      padding: 2.5rem; text-align: center; cursor: pointer;
+      transition: border-color .2s, background .2s; position: relative;
+    }
+    .upload-area:hover { border-color: var(--gold); background: rgba(201,169,110,.04); }
+    .upload-area.dragging { border-color: var(--gold); background: rgba(201,169,110,.08); }
+    .upload-area input[type="file"] { display: none; }
+    .upload-icon { font-size: 2.2rem; margin-bottom: .8rem; opacity: .5; }
+    .upload-area h4 { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; color: var(--cream); }
+    .upload-area p { font-size: .8rem; color: var(--muted); margin-top: .3rem; }
+    #previewImg { max-width: 160px; max-height: 160px; border-radius: var(--radius); margin-top: 1rem; object-fit: cover; display: none; }
+
+    /* ── RESULT AREA ─────────────────────────────────────────────────── */
+    .result-box {
+      margin-top: 1.5rem; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 1.5rem; display: none;
+    }
+    .result-box.show { display: block; animation: fadeIn .4s ease; }
+    .result-label {
+      font-size: .7rem; letter-spacing: .15em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: .8rem;
+    }
+    .result-text {
+      font-size: .92rem; color: var(--text); line-height: 1.8;
+      white-space: pre-wrap; word-break: break-word;
+    }
+
+    /* ── LOADING ─────────────────────────────────────────────────────── */
+    .loading-wrap { display: none; align-items: center; gap: .8rem; margin-top: 1rem; }
+    .loading-wrap.show { display: flex; }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid var(--border); border-top-color: var(--gold);
+      border-radius: 50%; animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: .85rem; color: var(--muted); font-style: italic; }
+
+    /* ── MODAL ───────────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.85); backdrop-filter: blur(6px);
+      display: none; align-items: center; justify-content: center; padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; animation: fadeIn .25s ease; }
+    .modal {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 2.5rem;
+      width: 100%; max-width: 440px; position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 1rem; right: 1rem;
+      background: none; border: none; color: var(--muted);
+      font-size: 1.4rem; cursor: pointer; transition: color .2s;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal h2 { font-size: 1.8rem; font-weight: 300; color: var(--cream); margin-bottom: .3rem; }
+    .modal-sub { font-size: .85rem; color: var(--muted); margin-bottom: 1.5rem; }
+    .modal-tabs { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+    .modal-tab {
+      background: none; border: none; color: var(--muted);
+      font-family: 'DM Sans', sans-serif; font-size: .85rem;
+      letter-spacing: .08em; text-transform: uppercase;
+      cursor: pointer; padding-bottom: .4rem;
+      border-bottom: 2px solid transparent; transition: color .2s, border-color .2s;
+    }
+    .modal-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .modal-form { display: none; }
+    .modal-form.active { display: block; animation: fadeIn .25s; }
+    .modal-btn {
+      width: 100%; background: var(--gold); border: none; color: var(--bg);
+      padding: .9rem; border-radius: var(--radius);
+      font-family: 'DM Sans', sans-serif; font-size: .9rem; font-weight: 500;
+      letter-spacing: .08em; text-transform: uppercase;
+      cursor: pointer; margin-top: .5rem; transition: background .2s;
+    }
+    .modal-btn:hover { background: var(--gold-lt); }
+    .modal-msg { font-size: .85rem; margin-top: .8rem; text-align: center; }
+    .modal-msg.ok { color: var(--success); }
+    .modal-msg.err { color: var(--error); }
+
+    /* ── TOAST ───────────────────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 2rem; right: 2rem; z-index: 500;
+      background: var(--card); border: 1px solid var(--border);
+      padding: .9rem 1.4rem; border-radius: var(--radius);
+      font-size: .88rem; color: var(--text);
+      transform: translateY(120%); transition: transform .3s;
+    }
+    .toast.show { transform: none; }
+    .toast.ok { border-color: var(--success); color: var(--success); }
+    .toast.err { border-color: var(--error); color: var(--error); }
+
+    /* ── FEATURES ────────────────────────────────────────────────────── */
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
+    .feature-item {
+      padding: 1.8rem; border: 1px solid var(--border);
+      border-radius: var(--radius); background: var(--card);
+    }
+    .feature-item .fi-num {
+      font-family: 'Cormorant Garamond', serif; font-size: 2.5rem;
+      color: var(--gold); opacity: .4; line-height: 1;
+    }
+    .feature-item h4 { font-size: 1.1rem; font-weight: 400; color: var(--cream); margin: .5rem 0 .4rem; }
+    .feature-item p { font-size: .85rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── HISTORY ─────────────────────────────────────────────────────── */
+    #historyList { display: flex; flex-direction: column; gap: 1rem; }
+    .hist-item {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.2rem;
+    }
+    .hist-meta {
+      display: flex; gap: .8rem; align-items: center; margin-bottom: .6rem;
+    }
+    .hist-type {
+      font-size: .68rem; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--bg); background: var(--gold);
+      padding: .15rem .5rem; border-radius: 2px;
+    }
+    .hist-date { font-size: .78rem; color: var(--muted); }
+    .hist-preview { font-size: .85rem; color: var(--text); line-height: 1.6; }
+
+    /* ── FOOTER ──────────────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border); padding: 2.5rem 2rem;
+      text-align: center; color: var(--muted); font-size: .82rem;
+    }
+    footer a { color: var(--gold); text-decoration: none; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      nav { padding: 1rem 1.2rem; }
+      .nav-links { display: none; }
+      section { padding: 3.5rem 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">Style<span>AI</span></a>
+  <div class="nav-links">
+    <a href="#tools">Tools</a>
+    <a href="#features">Features</a>
+    <a href="#history">History</a>
+  </div>
+  <div class="nav-auth">
+    <span id="userGreet" style="display:none"></span>
+    <button class="btn-ghost" id="navLogin" onclick="openModal()">Sign In</button>
+    <button class="btn-gold" id="navLogout" style="display:none" onclick="doLogout()">Sign Out</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <span class="hero-eyebrow">✦ AI-Powered Personal Styling ✦</span>
+    <h1>Your <em>Personal</em><br>Fashion Advisor</h1>
+    <p class="hero-sub">
+      Upload your photo, describe your style, and receive curated fashion recommendations
+      powered by Groq's LLaMA AI — tailored to your skin tone, body, and personality.
+    </p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="scrollToTools()">Get Styled Now</button>
+      <a class="btn-outline" href="#features">Explore Features</a>
+    </div>
+  </div>
+</section>
+
+<!-- TOOLS -->
+<section id="tools">
+  <div class="container">
+    <div class="divider">AI Tools</div>
+    <div class="section-title" style="text-align:center; margin-bottom:.5rem">
+      Four Powerful <em>Style Tools</em>
+    </div>
+    <p class="section-sub" style="text-align:center">
+      Click any card to open the tool
+    </p>
+
+    <div class="tools-grid">
+      <!-- TOOL 1 -->
+      <div class="tool-card" onclick="openTool('outfit')">
+        <div class="tool-icon">👗</div>
+        <h3>Outfit Recommendation</h3>
+        <p>Upload your photo or describe your profile. Get 5 personalised outfit ideas with colour palettes and accessories.</p>
+        <span class="tool-tag">Vision AI</span>
+      </div>
+      <!-- TOOL 2 -->
+      <div class="tool-card" onclick="openTool('pitch')">
+        <div class="tool-icon">✍️</div>
+        <h3>Style Pitch Generator</h3>
+        <p>Create compelling lookbook descriptions and fashion pitches for any outfit or collection.</p>
+        <span class="tool-tag">Copywriting</span>
+      </div>
+      <!-- TOOL 3 -->
+      <div class="tool-card" onclick="openTool('score')">
+        <div class="tool-icon">📊</div>
+        <h3>Style Fit Score</h3>
+        <p>Score customer-outfit compatibility across budget, occasion, urgency, and personalisation potential.</p>
+        <span class="tool-tag">Analytics</span>
+      </div>
+      <!-- TOOL 4 -->
+      <div class="tool-card" onclick="openTool('campaign')">
+        <div class="tool-icon">📣</div>
+        <h3>Campaign Generator</h3>
+        <p>Build complete social media campaigns with content ideas, ad copies, and hashtag strategies.</p>
+        <span class="tool-tag">Marketing</span>
+      </div>
+    </div>
+
+    <!-- PANEL 1: OUTFIT -->
+    <div class="panel" id="panel-outfit">
+      <div class="panel-title">Outfit <span>Recommendation</span></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Gender</label>
+          <select id="o-gender">
+            <option value="Female">Female</option>
+            <option value="Male">Male</option>
+            <option value="Non-binary">Non-binary</option>
+            <option value="Prefer not to say">Prefer not to say</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Age</label>
+          <input type="number" id="o-age" placeholder="e.g. 26" min="10" max="100" />
+        </div>
+        <div class="form-group">
+          <label>Size</label>
+          <select id="o-size">
+            <option value="XS">XS</option>
+            <option value="S">S</option>
+            <option value="M" selected>M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+            <option value="XXL">XXL</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Cultural Style</label>
+          <input type="text" id="o-culture" placeholder="e.g. Indian, Western, Fusion…" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Desired Dress Style</label>
+        <input type="text" id="o-style" placeholder="e.g. Business casual, Boho, Indo-Western…" />
+      </div>
+      <!-- Upload -->
+      <div class="form-group">
+        <label>Your Photo (optional — enables Vision AI)</label>
+        <div class="upload-area" id="dropZone" onclick="document.getElementById('o-photo').click()" ondragover="handleDrag(event)" ondrop="handleDrop(event)">
+          <input type="file" id="o-photo" accept="image/*" onchange="previewPhoto(this)" />
+          <div class="upload-icon">📷</div>
+          <h4>Drag & Drop your photo</h4>
+          <p>or click to browse — PNG, JPG, WEBP (max 10MB)</p>
+          <img id="previewImg" src="" alt="Preview" />
+        </div>
+      </div>
+      <button class="btn-primary" onclick="submitOutfit()">✦ Get My Style Recommendations</button>
+      <div class="loading-wrap" id="outfitLoading">
+        <div class="spinner"></div>
+        <span class="loading-text">Analysing your style with AI…</span>
+      </div>
+      <div class="result-box" id="outfitResult">
+        <div class="result-label">Your Personalised Style Profile</div>
+        <div class="result-text" id="outfitText"></div>
+      </div>
+    </div>
+
+    <!-- PANEL 2: PITCH -->
+    <div class="panel" id="panel-pitch">
+      <div class="panel-title">Style <span>Pitch Generator</span></div>
+      <div class="form-group">
+        <label>Outfit / Collection</label>
+        <textarea id="p-product" placeholder="Describe the outfit or collection (e.g. 'A flowing emerald silk maxi dress with gold belt')"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Target Customer</label>
+        <input type="text" id="p-customer" placeholder="e.g. Professional women aged 28-40 who love classic elegance" />
+      </div>
+      <button class="btn-primary" onclick="submitPitch()">✦ Generate Style Pitch</button>
+      <div class="loading-wrap" id="pitchLoading">
+        <div class="spinner"></div>
+        <span class="loading-text">Crafting your lookbook pitch…</span>
+      </div>
+      <div class="result-box" id="pitchResult">
+        <div class="result-label">Your Style Pitch</div>
+        <div class="result-text" id="pitchText"></div>
+      </div>
+    </div>
+
+    <!-- PANEL 3: SCORE -->
+    <div class="panel" id="panel-score">
+      <div class="panel-title">Style Fit <span>Score</span></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Customer Name</label>
+          <input type="text" id="s-name" placeholder="e.g. Priya Sharma" />
+        </div>
+        <div class="form-group">
+          <label>Budget Range</label>
+          <input type="text" id="s-budget" placeholder="e.g. ₹5,000 – ₹15,000" />
+        </div>
+        <div class="form-group">
+          <label>Occasion / Need</label>
+          <input type="text" id="s-need" placeholder="e.g. Wedding guest outfit" />
+        </div>
+        <div class="form-group">
+          <label>Timeline / Urgency</label>
+          <input type="text" id="s-urgency" placeholder="e.g. Needed in 3 days" />
+        </div>
+      </div>
+      <button class="btn-primary" onclick="submitScore()">✦ Calculate Style Fit Score</button>
+      <div class="loading-wrap" id="scoreLoading">
+        <div class="spinner"></div>
+        <span class="loading-text">Computing compatibility score…</span>
+      </div>
+      <div class="result-box" id="scoreResult">
+        <div class="result-label">Style Fit Analysis</div>
+        <div class="result-text" id="scoreText"></div>
+      </div>
+    </div>
+
+    <!-- PANEL 4: CAMPAIGN -->
+    <div class="panel" id="panel-campaign">
+      <div class="panel-title">Marketing <span>Campaign Generator</span></div>
+      <div class="form-group">
+        <label>Fashion Product / Collection</label>
+        <input type="text" id="c-product" placeholder="e.g. Summer Festive Kurta Collection" />
+      </div>
+      <div class="form-group">
+        <label>Target Audience</label>
+        <input type="text" id="c-audience" placeholder="e.g. Urban women 20-35, fashion-forward, social media savvy" />
+      </div>
+      <div class="form-group">
+        <label>Marketing Platform(s)</label>
+        <input type="text" id="c-platform" placeholder="e.g. Instagram, Pinterest" />
+      </div>
+      <button class="btn-primary" onclick="submitCampaign()">✦ Build My Campaign</button>
+      <div class="loading-wrap" id="campaignLoading">
+        <div class="spinner"></div>
+        <span class="loading-text">Strategising your fashion campaign…</span>
+      </div>
+      <div class="result-box" id="campaignResult">
+        <div class="result-label">Your Marketing Campaign</div>
+        <div class="result-text" id="campaignText"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" style="background: var(--surface);">
+  <div class="container">
+    <div class="divider">Why StyleAI</div>
+    <h2 class="section-title" style="text-align:center">Built for <em>Modern Fashion</em></h2>
+    <p class="section-sub" style="text-align:center; margin-bottom:2.5rem">Four pillars that power your styling experience</p>
+    <div class="features-grid">
+      <div class="feature-item">
+        <div class="fi-num">01</div>
+        <h4>Vision AI Analysis</h4>
+        <p>Upload your photo and our AI analyses skin tone, body type, and current style to give hyper-personalised advice.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-num">02</div>
+        <h4>LLaMA 3.3 70B</h4>
+        <p>Groq's blazing-fast inference on the industry-leading LLaMA model — professional-quality styling in seconds.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-num">03</div>
+        <h4>Complete Toolkit</h4>
+        <p>From outfit ideas to marketing campaigns — every fashion professional and shopper need covered in one place.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi-num">04</div>
+        <h4>History & Profiles</h4>
+        <p>Sign in to save all your recommendations, track your style evolution, and revisit past advice anytime.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HISTORY -->
+<section id="history">
+  <div class="container">
+    <div class="divider">Your Activity</div>
+    <h2 class="section-title">Recommendation <em>History</em></h2>
+    <p class="section-sub">Sign in to view your saved recommendations</p>
+    <div id="historyList">
+      <p style="color:var(--muted); font-style:italic;">Sign in to view your history.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p style="margin-bottom:.4rem; font-family:'Cormorant Garamond',serif; font-size:1.1rem; color:var(--gold)">StyleAI</p>
+  <p>© 2024 StyleAI — Powered by <a href="https://console.groq.com" target="_blank">Groq</a> &amp; LLaMA 3.3 70B · Built with SmartBridge</p>
+</footer>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <h2>Welcome to <span style="color:var(--gold);font-style:italic">StyleAI</span></h2>
+    <p class="modal-sub">Sign in to save your history and profiles</p>
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab('login')">Sign In</button>
+      <button class="modal-tab" onclick="switchTab('signup')">Create Account</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="modal-form active" id="form-login">
+      <div class="form-group">
+        <label>Email or Phone</label>
+        <input type="text" id="l-id" placeholder="you@email.com or 9876543210" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="l-pw" placeholder="Your password" />
+      </div>
+      <button class="modal-btn" onclick="doLogin()">Sign In</button>
+      <p class="modal-msg" id="loginMsg"></p>
+    </div>
+
+    <!-- SIGNUP -->
+    <div class="modal-form" id="form-signup">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="r-name" placeholder="Your full name" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="r-email" placeholder="you@email.com" />
+        </div>
+        <div class="form-group">
+          <label>Phone (optional)</label>
+          <input type="tel" id="r-phone" placeholder="9876543210" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="r-pw" placeholder="Create a password" />
+      </div>
+      <button class="modal-btn" onclick="doSignup()">Create Account</button>
+      <p class="modal-msg" id="signupMsg"></p>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── STATE ──────────────────────────────────────────────────────────── */
+let currentPanel = null;
+
+/* ── NAV ────────────────────────────────────────────────────────────── */
+function scrollToTools() {
+  document.getElementById('tools').scrollIntoView({ behavior: 'smooth' });
+}
+
+/* ── TOOL PANELS ────────────────────────────────────────────────────── */
+function openTool(name) {
+  const panelId = 'panel-' + name;
+  if (currentPanel === panelId) {
+    document.getElementById(panelId).classList.remove('active');
+    currentPanel = null;
+    return;
+  }
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(panelId).classList.add('active');
+  currentPanel = panelId;
+  setTimeout(() => document.getElementById(panelId).scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+}
+
+/* ── PHOTO UPLOAD ───────────────────────────────────────────────────── */
+function previewPhoto(input) {
+  const img = document.getElementById('previewImg');
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => { img.src = e.target.result; img.style.display = 'block'; };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+function handleDrag(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('dragging'); }
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('dragging');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    const inp = document.getElementById('o-photo');
+    inp.files = dt.files;
+    previewPhoto(inp);
+  }
+}
+
+/* ── API CALLS ──────────────────────────────────────────────────────── */
+function setLoading(id, show) {
+  document.getElementById(id).classList.toggle('show', show);
+}
+function showResult(boxId, textId, content) {
+  document.getElementById(textId).textContent = content;
+  document.getElementById(boxId).classList.add('show');
+}
+
+async function submitOutfit() {
+  const fd = new FormData();
+  fd.append('gender',        document.getElementById('o-gender').value);
+  fd.append('age',           document.getElementById('o-age').value || '25');
+  fd.append('size',          document.getElementById('o-size').value);
+  fd.append('culture_style', document.getElementById('o-culture').value || 'Universal');
+  fd.append('dress_style',   document.getElementById('o-style').value || 'Casual');
+  const photo = document.getElementById('o-photo').files[0];
+  if (photo) fd.append('photo', photo);
+
+  setLoading('outfitLoading', true);
+  document.getElementById('outfitResult').classList.remove('show');
+  try {
+    const res  = await fetch('/get_recommendation', { method: 'POST', body: fd });
+    const data = await res.json();
+    showResult('outfitResult', 'outfitText', data.result);
+    if (data.photo_analyzed) showToast('Vision AI analysed your photo!', 'ok');
+  } catch (e) {
+    showResult('outfitResult', 'outfitText', 'Error: Could not connect to server.');
+  }
+  setLoading('outfitLoading', false);
+}
+
+async function submitPitch() {
+  const fd = new FormData();
+  fd.append('product',  document.getElementById('p-product').value);
+  fd.append('customer', document.getElementById('p-customer').value);
+  if (!fd.get('product')) { showToast('Please enter an outfit/collection.', 'err'); return; }
+
+  setLoading('pitchLoading', true);
+  document.getElementById('pitchResult').classList.remove('show');
+  try {
+    const res  = await fetch('/generate_pitch', { method: 'POST', body: fd });
+    const data = await res.json();
+    showResult('pitchResult', 'pitchText', data.result);
+  } catch (e) {
+    showResult('pitchResult', 'pitchText', 'Error: Could not connect to server.');
+  }
+  setLoading('pitchLoading', false);
+}
+
+async function submitScore() {
+  const fd = new FormData();
+  fd.append('name',    document.getElementById('s-name').value);
+  fd.append('budget',  document.getElementById('s-budget').value);
+  fd.append('need',    document.getElementById('s-need').value);
+  fd.append('urgency', document.getElementById('s-urgency').value);
+
+  setLoading('scoreLoading', true);
+  document.getElementById('scoreResult').classList.remove('show');
+  try {
+    const res  = await fetch('/lead_score', { method: 'POST', body: fd });
+    const data = await res.json();
+    showResult('scoreResult', 'scoreText', data.result);
+  } catch (e) {
+    showResult('scoreResult', 'scoreText', 'Error: Could not connect to server.');
+  }
+  setLoading('scoreLoading', false);
+}
+
+async function submitCampaign() {
+  const fd = new FormData();
+  fd.append('product',  document.getElementById('c-product').value);
+  fd.append('audience', document.getElementById('c-audience').value);
+  fd.append('platform', document.getElementById('c-platform').value);
+  if (!fd.get('product')) { showToast('Please enter a product/collection.', 'err'); return; }
+
+  setLoading('campaignLoading', true);
+  document.getElementById('campaignResult').classList.remove('show');
+  try {
+    const res  = await fetch('/generate_campaign', { method: 'POST', body: fd });
+    const data = await res.json();
+    showResult('campaignResult', 'campaignText', data.result);
+  } catch (e) {
+    showResult('campaignResult', 'campaignText', 'Error: Could not connect to server.');
+  }
+  setLoading('campaignLoading', false);
+}
+
+/* ── AUTH MODAL ─────────────────────────────────────────────────────── */
+function openModal()  { document.getElementById('authModal').classList.add('open'); }
+function closeModal() { document.getElementById('authModal').classList.remove('open'); }
+function switchTab(tab) {
+  document.querySelectorAll('.modal-tab').forEach((t, i) => t.classList.toggle('active', (i===0 && tab==='login') || (i===1 && tab==='signup')));
+  document.getElementById('form-login').classList.toggle('active',  tab === 'login');
+  document.getElementById('form-signup').classList.toggle('active', tab === 'signup');
+}
+
+async function doLogin() {
+  const identifier = document.getElementById('l-id').value.trim();
+  const password   = document.getElementById('l-pw').value;
+  const msg        = document.getElementById('loginMsg');
+  if (!identifier || !password) { msg.textContent = 'Please fill all fields.'; msg.className = 'modal-msg err'; return; }
+  try {
+    const res  = await fetch('/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ identifier, password }) });
+    const data = await res.json();
+    if (data.success) {
+      closeModal();
+      setUserUI(data.name || identifier);
+      loadHistory();
+      showToast('Welcome back, ' + (data.name || identifier) + '!', 'ok');
+    } else {
+      msg.textContent = data.message;
+      msg.className = 'modal-msg err';
+    }
+  } catch (e) {
+    msg.textContent = 'Server error. Try again.';
+    msg.className = 'modal-msg err';
+  }
+}
+
+async function doSignup() {
+  const name     = document.getElementById('r-name').value.trim();
+  const email    = document.getElementById('r-email').value.trim();
+  const phone    = document.getElementById('r-phone').value.trim();
+  const password = document.getElementById('r-pw').value;
+  const msg      = document.getElementById('signupMsg');
+  if (!password) { msg.textContent = 'Password required.'; msg.className = 'modal-msg err'; return; }
+  try {
+    const res  = await fetch('/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, phone, password }) });
+    const data = await res.json();
+    if (data.success) {
+      closeModal();
+      setUserUI(data.name || email);
+      showToast('Account created! Welcome, ' + (data.name || 'Stylist') + '!', 'ok');
+    } else {
+      msg.textContent = data.message;
+      msg.className = 'modal-msg err';
+    }
+  } catch (e) {
+    msg.textContent = 'Server error. Try again.';
+    msg.className = 'modal-msg err';
+  }
+}
+
+async function doLogout() {
+  await fetch('/logout', { method: 'POST' });
+  document.getElementById('navLogin').style.display  = '';
+  document.getElementById('navLogout').style.display = 'none';
+  document.getElementById('userGreet').style.display = 'none';
+  document.getElementById('historyList').innerHTML   = '<p style="color:var(--muted);font-style:italic;">Sign in to view your history.</p>';
+  showToast('Signed out successfully.', 'ok');
+}
+
+function setUserUI(name) {
+  document.getElementById('navLogin').style.display  = 'none';
+  document.getElementById('navLogout').style.display = '';
+  document.getElementById('userGreet').style.display = '';
+  document.getElementById('userGreet').textContent   = 'Hello, ' + name;
+}
+
+/* ── HISTORY ────────────────────────────────────────────────────────── */
+async function loadHistory() {
+  try {
+    const res  = await fetch('/api/history');
+    const data = await res.json();
+    if (!data.success) return;
+    const list = document.getElementById('historyList');
+    if (!data.history.length) { list.innerHTML = '<p style="color:var(--muted);font-style:italic;">No history yet — use a tool above!</p>'; return; }
+    list.innerHTML = data.history.map(h => `
+      <div class="hist-item">
+        <div class="hist-meta">
+          <span class="hist-type">${h.request_type}</span>
+          <span class="hist-date">${new Date(h.created_at).toLocaleString()}</span>
+        </div>
+        <div class="hist-preview">${h.ai_response.substring(0, 300)}${h.ai_response.length > 300 ? '…' : ''}</div>
+      </div>
+    `).join('');
+  } catch (e) { /* not logged in */ }
+}
+
+/* ── TOAST ──────────────────────────────────────────────────────────── */
+function showToast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+/* ── INIT ───────────────────────────────────────────────────────────── */
+(async () => {
+  try {
+    const res  = await fetch('/api/me');
+    const data = await res.json();
+    if (data.logged_in) {
+      setUserUI(data.user.name || data.user.email || 'Stylist');
+      loadHistory();
+    }
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
